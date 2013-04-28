@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+
+var optimist = require('optimist')
+    .usage('Usage: habiter [add,sub] HABIT COUNT'),
+    fs = require('fs');
+
+var env = {};
+
+function jsonFile(f) {
+    return JSON.parse(fs.readFileSync(f));
+}
+
+function saveDB(db) {
+    return fs.writeFileSync(env.dbPath, JSON.stringify(db));
+}
+
+function bootstrapDB() {
+    var rc;
+    env.rcPath = process.env.HOME + '/.habiterrc';
+    try {
+        rc = jsonFile(env.rcPath);
+    } catch(e) {
+        console.warn('run habiter init');
+        process.exit();
+    }
+    env.dbPath = rc.db || process.env.HOME + '/.habiterdb';
+    return jsonFile(env.dbPath);
+}
+
+function init() {
+    var rcPath = process.env.HOME + '/.habiterrc',
+        dbPath = process.env.HOME + '/.habiterdb';
+
+    fs.writeFileSync(rcPath, '{}');
+    fs.writeFileSync(dbPath, '{}');
+}
+
+function ls() {
+    var db = bootstrapDB(),
+        habits = Object.keys(db);
+
+    console.log(habits.length ? habits.join(', ') : 'No habits yet.');
+}
+
+function add() {
+    if (argv._.length < 2) return optimist.showHelp();
+    var db = bootstrapDB();
+    if (!db[argv._[1]]) db[argv._[1]] = [];
+    db[argv._[1]].push({
+        date: new Date(),
+        n: 1
+    });
+    saveDB(db);
+}
+
+function sub() {
+    if (argv._.length < 2) return optimist.showHelp();
+    var db = bootstrapDB(), off;
+    var habitName = argv._[1];
+    if (db[habitName] && db[habitName].length) off = db[habitName].pop();
+    if (off) console.log('popped completion at ', off.date);
+    else console.log('no habit called ' + habitName);
+    saveDB(db);
+}
+
+function load() {
+    return jsonFile(dbPath);
+}
+
+var commands = {
+    init: init,
+    add: add,
+    sub: sub,
+    ls: ls
+};
+
+var argv = optimist.argv;
+
+if (!argv._.length) return optimist.showHelp();
+if (commands[argv._[0]]) commands[argv._[0]](argv);

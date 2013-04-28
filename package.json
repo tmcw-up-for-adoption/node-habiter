@@ -1,0 +1,26 @@
+{
+  "name": "habiter",
+  "version": "0.0.0",
+  "description": "a cli tool for habits",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "habit",
+    "productivity",
+    "tool"
+  ],
+  "bin": {
+    "habiter": "habiter"
+  },
+  "author": "Tom MacWright <tom@macwright.org>",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "preferGlobal": true,
+  "dependencies": {
+    "optimist": "~0.4.0",
+    "charm": "~0.1.2"
+  }
+}

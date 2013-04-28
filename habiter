@@ -15,16 +15,15 @@ function saveDB(db) {
 }
 
 function bootstrapDB() {
-    var rc;
-    env.rcPath = process.env.HOME + '/.habiterrc';
     try {
-        rc = jsonFile(env.rcPath);
+        env.rcPath = process.env.HOME + '/.habiterrc';
+        env.rc = jsonFile(env.rcPath);
+        env.dbPath = env.rc.db || process.env.HOME + '/.habiterdb';
+        env.db = jsonFile(env.dbPath);
     } catch(e) {
         console.warn('run habiter init');
         process.exit();
     }
-    env.dbPath = rc.db || process.env.HOME + '/.habiterdb';
-    return jsonFile(env.dbPath);
 }
 
 function init() {
@@ -36,15 +35,16 @@ function init() {
 }
 
 function ls() {
-    var db = bootstrapDB(),
-        habits = Object.keys(db);
+    bootstrapDB();
+    var habits = Object.keys(env.db);
 
     console.log(habits.length ? habits.join(', ') : 'No habits yet.');
 }
 
 function add() {
     if (argv._.length < 2) return optimist.showHelp();
-    var db = bootstrapDB();
+    bootstrapDB();
+    var db = env.db;
     if (!db[argv._[1]]) db[argv._[1]] = [];
     db[argv._[1]].push({
         date: new Date(),
@@ -55,11 +55,23 @@ function add() {
 
 function sub() {
     if (argv._.length < 2) return optimist.showHelp();
-    var db = bootstrapDB(), off;
+    bootstrapDB();
+    var db = env.db, off;
     var habitName = argv._[1];
     if (db[habitName] && db[habitName].length) off = db[habitName].pop();
+    if (db[habitName] && !db[habitName].length) delete db[habitName];
     if (off) console.log('popped completion at ', off.date);
     else console.log('no habit called ' + habitName);
+    saveDB(db);
+}
+
+function del() {
+    if (argv._.length < 2) return optimist.showHelp();
+    bootstrapDB();
+    var db = env.db;
+    var habitName = argv._[1];
+    delete db[habitName];
+    console.log('removed all instances of ' + habitName);
     saveDB(db);
 }
 
@@ -70,11 +82,19 @@ function load() {
 var commands = {
     init: init,
     add: add,
+    del: del,
     sub: sub,
     ls: ls
 };
 
+function shorthand(str) {
+    return (str && Object.keys(commands).filter(function(c) {
+        return c.indexOf(str) === 0;
+    })[0]) || process.exit(console.warn('command not found, valid commands: ' +
+        Object.keys(commands).join(', ')));
+}
+
 var argv = optimist.argv;
 
 if (!argv._.length) return optimist.showHelp();
-if (commands[argv._[0]]) commands[argv._[0]](argv);
+commands[shorthand(argv._[0])](argv);

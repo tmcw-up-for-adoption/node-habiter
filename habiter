@@ -5,7 +5,8 @@ var commands = {
     add: curry(bootstrapDB, checkn(2), add),
     del: curry(bootstrapDB, checkn(2), del),
     sub: curry(bootstrapDB, checkn(2), sub),
-    ls: curry(bootstrapDB, ls)
+    ls: curry(bootstrapDB, ls),
+    week: curry(bootstrapDB, week)
 };
 
 var optimist = require('optimist')
@@ -59,16 +60,39 @@ function init() {
 }
 
 function ls() {
-    bootstrapDB();
     var habits = Object.keys(env.db);
     console.log(habits.length ? habits.join(', ') : 'No habits yet.');
+}
+
+function day(d) {
+    return [d.getFullYear(), d.getMonth() + 1, d.getDate() + 1].join('-');
+}
+
+function week() {
+    var today = new Date(),
+        weekago = new Date((+today) - (7 * 24 * 60 * 60 * 1000)),
+        habits = Object.keys(env.db),
+        weekdb = {};
+    for (var i = 0; i < habits.length; i++) {
+        var habitlist = env.db[habits[i]];
+        var byday = {};
+        for (var j = habitlist.length - 1; j >= 0; j--) {
+            var d = new Date(habitlist[j].date);
+            if (+d < weekago) break;
+            if (!byday[day(d)]) byday[day(d)] = 0;
+            byday[day(d)]++;
+        }
+        weekdb[habits[i]] = byday;
+    }
 }
 
 function add() {
     var db = env.db;
     if (!db[argv._[1]]) db[argv._[1]] = [];
+    var n = argv._[2] ? parseInt(argv._[2], 10) : 1;
     db[argv._[1]].push({
-        date: new Date(), n: 1
+        date: new Date(),
+        n: n
     });
     saveDB(db);
 }

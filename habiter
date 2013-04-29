@@ -1,8 +1,16 @@
 #!/usr/bin/env node
 
+var commands = {
+    init: init,
+    add: curry(bootstrapDB, checkn(2), add),
+    del: curry(bootstrapDB, checkn(2), del),
+    sub: curry(bootstrapDB, checkn(2), sub),
+    ls: curry(bootstrapDB, ls)
+};
+
 var optimist = require('optimist')
-    .usage('Usage: habiter [add,sub] HABIT COUNT'),
-    fs = require('fs');
+    .usage('Usage: habiter [' + Object.keys(commands).join(',') + '] HABIT COUNT');
+var fs = require('fs');
 
 var env = {};
 
@@ -12,6 +20,22 @@ function jsonFile(f) {
 
 function saveDB(db) {
     return fs.writeFileSync(env.dbPath, JSON.stringify(db));
+}
+
+function curry() {
+    var fns = arguments;
+    return function() {
+        for (var i = 0; i < fns.length; i++) fns[i].apply(fns[i], arguments);
+    };
+}
+
+function checkn(n) {
+    return function() {
+        if (argv._.length < n) {
+            optimist.showHelp();
+            process.exit();
+        }
+    }
 }
 
 function bootstrapDB() {
@@ -37,27 +61,21 @@ function init() {
 function ls() {
     bootstrapDB();
     var habits = Object.keys(env.db);
-
     console.log(habits.length ? habits.join(', ') : 'No habits yet.');
 }
 
 function add() {
-    if (argv._.length < 2) return optimist.showHelp();
-    bootstrapDB();
     var db = env.db;
     if (!db[argv._[1]]) db[argv._[1]] = [];
     db[argv._[1]].push({
-        date: new Date(),
-        n: 1
+        date: new Date(), n: 1
     });
     saveDB(db);
 }
 
 function sub() {
-    if (argv._.length < 2) return optimist.showHelp();
-    bootstrapDB();
-    var db = env.db, off;
-    var habitName = argv._[1];
+    var db = env.db,
+        habitName = argv._[1];
     if (db[habitName] && db[habitName].length) off = db[habitName].pop();
     if (db[habitName] && !db[habitName].length) delete db[habitName];
     if (off) console.log('popped completion at ', off.date);
@@ -66,26 +84,12 @@ function sub() {
 }
 
 function del() {
-    if (argv._.length < 2) return optimist.showHelp();
-    bootstrapDB();
-    var db = env.db;
-    var habitName = argv._[1];
+    var db = env.db,
+        habitName = argv._[1];
     delete db[habitName];
     console.log('removed all instances of ' + habitName);
     saveDB(db);
 }
-
-function load() {
-    return jsonFile(dbPath);
-}
-
-var commands = {
-    init: init,
-    add: add,
-    del: del,
-    sub: sub,
-    ls: ls
-};
 
 function shorthand(str) {
     return (str && Object.keys(commands).filter(function(c) {

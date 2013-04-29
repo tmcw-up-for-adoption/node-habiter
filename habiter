@@ -5,6 +5,7 @@ var commands = {
     add: curry(bootstrapDB, checkn(2), add),
     del: curry(bootstrapDB, checkn(2), del),
     sub: curry(bootstrapDB, checkn(2), sub),
+    sums: curry(bootstrapDB, sums),
     ls: curry(bootstrapDB, ls),
     week: curry(bootstrapDB, week)
 };
@@ -68,6 +69,14 @@ function day(d) {
     return [d.getFullYear(), d.getMonth() + 1, d.getDate() + 1].join('-');
 }
 
+function sums() {
+    Object.keys(env.db).forEach(function(k) {
+        console.log(env.db[k].reduce(function(mem, h) {
+            return h.n + mem;
+        }, 0), k);
+    });
+}
+
 function week() {
     var today = new Date(),
         weekago = new Date((+today) - (7 * 24 * 60 * 60 * 1000)),
@@ -83,6 +92,10 @@ function week() {
             byday[day(d)]++;
         }
         weekdb[habits[i]] = byday;
+    }
+    for (var habit in weekdb) {
+        for (var k = 0; k < 7; k++) {
+        }
     }
 }
 

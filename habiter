@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+init.desc = 'create .habiterrc and .habiterdb files';
+sums.desc = 'total completions';
+sub.desc = 'pop last completion';
+del.desc = 'erase task';
+add.desc = 'record a completion';
+week.desc = 'week summary by day';
+last.desc = 'last completion';
+ls.desc = 'list habits';
+
 var commands = {
     init: init,
     add: curry(bootstrapDB, checkn(2), add),
@@ -7,11 +16,15 @@ var commands = {
     sub: curry(bootstrapDB, checkn(2), sub),
     sums: curry(bootstrapDB, sums),
     ls: curry(bootstrapDB, ls),
+    last: curry(bootstrapDB, last),
     week: curry(bootstrapDB, week)
 };
 
 var optimist = require('optimist')
-    .usage('Usage: habiter [' + Object.keys(commands).join(',') + '] HABIT COUNT');
+    .usage('Usage: habiter [' + Object.keys(commands).join(',') + ']\n\n' +
+    Object.keys(commands).map(function(k) {
+        return k + ': ' + commands[k].desc;
+    }).join('\n'));
 var fs = require('fs');
 
 var env = {};
@@ -26,9 +39,11 @@ function saveDB(db) {
 
 function curry() {
     var fns = arguments;
-    return function() {
+    var ret = function() {
         for (var i = 0; i < fns.length; i++) fns[i].apply(fns[i], arguments);
     };
+    ret.desc = arguments[arguments.length - 1].desc;
+    return ret;
 }
 
 function checkn(n) {
@@ -70,11 +85,14 @@ function day(d) {
 }
 
 function sums() {
-    Object.keys(env.db).forEach(function(k) {
-        console.log(env.db[k].reduce(function(mem, h) {
-            return h.n + mem;
-        }, 0), k);
-    });
+    function total(mem, h) { return h.n + mem; }
+    function print(k) { console.log(env.db[k].reduce(total, 0), k); }
+    Object.keys(env.db).forEach(print);
+}
+
+function last() {
+    function last(k) { console.log(env.db[k][env.db[k].length - 1].date, k); }
+    Object.keys(env.db).forEach(last);
 }
 
 function week() {

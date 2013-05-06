@@ -24,7 +24,8 @@ var optimist = require('optimist')
     .usage('Usage: habiter [' + Object.keys(commands).join(',') + ']\n\n' +
     Object.keys(commands).map(function(k) {
         return k + ': ' + commands[k].desc;
-    }).join('\n'));
+    }).join('\n')),
+    moment = require('moment');
 var fs = require('fs');
 
 var env = {};
@@ -91,7 +92,9 @@ function sums() {
 }
 
 function last() {
-    function last(k) { console.log(env.db[k][env.db[k].length - 1].date, k); }
+    function last(k) {
+        console.log(moment(env.db[k][env.db[k].length - 1].date).format('YYYY-MM-DD'), k);
+    }
     Object.keys(env.db).forEach(last);
 }
 

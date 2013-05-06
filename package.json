@@ -21,6 +21,7 @@
   "preferGlobal": true,
   "dependencies": {
     "optimist": "~0.4.0",
-    "charm": "~0.1.2"
+    "charm": "~0.1.2",
+    "moment": "~2.0.0"
   }
 }

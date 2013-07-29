@@ -8,6 +8,7 @@ add.desc = 'record a completion';
 week.desc = 'week summary by day';
 last.desc = 'last completion';
 ls.desc = 'list habits';
+json.desc = 'export as json';
 
 var commands = {
     init: init,
@@ -17,7 +18,8 @@ var commands = {
     sums: curry(bootstrapDB, sums),
     ls: curry(bootstrapDB, ls),
     last: curry(bootstrapDB, last),
-    week: curry(bootstrapDB, week)
+    week: curry(bootstrapDB, week),
+    json: curry(bootstrapDB, json),
 };
 
 var optimist = require('optimist')
@@ -54,7 +56,11 @@ function checkn(n) {
             optimist.showHelp();
             process.exit();
         }
-    }
+    };
+}
+
+function json() {
+    console.log(JSON.stringify(env.db, null, 4));
 }
 
 function bootstrapDB() {
@@ -93,10 +99,10 @@ function sums() {
 }
 
 function last() {
-    function last(k) {
+    function l(k) {
         console.log(moment(env.db[k][env.db[k].length - 1].date).format('YYYY-MM-DD'), k);
     }
-    Object.keys(env.db).forEach(last);
+    Object.keys(env.db).forEach(l);
 }
 
 function week() {
@@ -110,7 +116,7 @@ function week() {
         do {
             zeroes[wk.format('YYYY-MM-DD')] = 0;
             wk = wk.add('days', 1);
-        } while (wk.format('YYYY-MM-DD') !== today.format('YYYY-MM-DD'))
+        } while (wk.format('YYYY-MM-DD') !== today.format('YYYY-MM-DD'));
         return zeroes;
     }
 
@@ -128,7 +134,7 @@ function week() {
     for (var habit in weekdb) {
         process.stdout.write(pad(habit, 15));
         for (var d in weekdb[habit]) {
-            if (weekdb[habit][d] == 0) {
+            if (weekdb[habit][d] === 0) {
                 process.stdout.write('-');
             } else {
                 process.stdout.write('' + weekdb[habit][d]);
